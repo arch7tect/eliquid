@@ -1,0 +1,266 @@
+﻿
+
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html lang="en" ng-app="eliquid" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="eliquid" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="eliquid" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en" ng-app="eliquid" class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>ELiquid</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="lib/bootstrap.css">
+    <script src="lib/jquery.js"></script>
+    <script src="lib/bootstrap.js"></script>
+    <script src="lib/angular.js"></script>
+    <script src="lib/glpk.js"></script>
+    <script src="lib/angular-local-storage.js"></script>
+    <script src="lib/dropbox.js"></script>
+    <script src="lib/angular-translate.js"></script>
+    <script src="lib/angular-translate-loader-static-files.js"></script>
+    <script src="app.module.js"></script>
+</head>
+<body>
+<!--[if lt IE 7]>
+<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+<![endif]-->
+<div class="container" ng-controller="eliquidCtrl">
+  <h3>{{'ELiquid'|translate}}</h3>
+  <ul class="nav nav-tabs">
+    <li class="active"><a data-toggle="tab" href="#calculator">{{'Calculator'|translate}}</a></li>
+    <li><a data-toggle="tab" href="#database">{{'Database'|translate}}</a></li>
+    <li><a data-toggle="tab" href="#mixes">{{'Mixes'|translate}}</a></li>
+    <li><a data-toggle="tab" href="#options">{{'Options'|translate}}</a></li>
+  </ul>
+  <div class="tab-content">
+    <div id="calculator" class="tab-pane fade in active">
+      <table class="table"}}">
+        <thead style="{{model.current.status != 5 ? 'background-color: red' : ''}}">
+          <tr>
+            <th>{{'Volume (ml)'|translate}}</th>
+            <th>{{'Cost ($)'|translate}}</th>
+            <th>{{'PG (%)'|translate}}</th>
+            <th>{{'VG (%)'|translate}}</th>
+            <th>{{'AD (%)'|translate}}</th>
+            <th>{{'Nicotine (mg/ml)'|translate}}</th>
+            <th>{{'Show volume in'|translate}}</th>
+          </tr>
+        <thead>
+        <tbody>
+          <tr>
+            <td><input type="number" class="form-control" id="t_vol" min="0" ng-model="model.current.t_vol" ng-change="update()"></td>
+            <td><input type="number" class="form-control" id="t_cost" min="0" ng-model="model.current.t_cost" ng-readonly="true"></td>
+            <td><input type="number" class="form-control" id="t_pg" min="0" max="100" ng-model="model.current.t_pg" ng-change="update()"></td>
+            <td><input type="number" class="form-control" id="t_vg" min="0" max="100" ng-model="model.current.t_vg" ng-change="update()"></td>
+            <td><input type="number" class="form-control" id="t_ad" min="0" max="100" ng-model="model.current.t_ad" ng-change="update()"></td>
+            <td><input type="number" class="form-control" id="t_ni" min="0" max="100" ng-model="model.current.t_ni" ng-change="update()"></td>
+            <td>
+              <select class="form-control" id="vScale" ng-init="vScale='ML'" ng-model="vScale">
+                <option value="ML">{{'ml'|translate}}</option>
+                <option value="DROPS">{{'drops'|translate}}</option>
+              </select>
+            </td>
+          </tr>
+        <tbody>
+      </table>
+      
+      <table class="table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>{{'Name'|translate}}</th>
+            <th ng-hide="vScale=='DROPS'">{{'Volume (ml)'|translate}}</th>
+            <th ng-hide="vScale=='ML'">{{'Volume (drops)'|translate}}</th>
+            <th>{{'Price ($/ml)'|translate}}</th>
+            <th>{{'PG (%)'|translate}}</th>
+            <th>{{'VG (%)'|translate}}</th>
+            <th>{{'AD (%)'|translate}}</th>
+            <th>{{'Nicotine (mg/ml)'|translate}}</th>
+            <th ng-hide="vScale=='DROPS'">{{'Min Vol (ml)'|translate}}</th>
+            <th ng-hide="vScale=='ML'">{{'Min Vol (drops)'|translate}}</th>
+            <th ng-hide="vScale=='DROPS'">{{'Max Vol (ml)'|translate}}</th>
+            <th ng-hide="vScale=='ML'">{{'Max Vol (drops)'|translate}}</th>
+          </tr>
+        <thead>
+        <tbody>
+          <tr ng-repeat="a in model.current.A">
+            <td><button type="submit" class="btn btn-default" ng-click="deleteCalc(a)"><span class="glyphicon glyphicon-minus"></span></button></td>
+            <td><input type="text" class="form-control" id="a.name" ng-model="a.name" ng-change="save()"></td>
+            <td ng-hide="vScale=='DROPS'"><strong>{{a.x}}</strong></td>
+            <td ng-hide="vScale=='ML'"><strong>{{a.xd}}</strong></td>
+            <td><input type="number" class="form-control" id="a.price" min="0" ng-model="a.price" ng-change="update()"></td>
+            <td><input type="number" class="form-control" id="a.pg" min="0" max="100" ng-model="a.pg" ng-change="update()"></td>
+            <td><input type="number" class="form-control" id="a.vg" min="0" max="100" ng-model="a.vg" ng-change="update()"></td>
+            <td><input type="number" class="form-control" id="a.ad" min="0" max="100" ng-model="a.ad" ng-change="update()"></td>
+            <td><input type="number" class="form-control" id="a.ni" min="0" max="100" ng-model="a.ni" ng-change="update()"></td>
+            <td ng-hide="vScale=='DROPS'"><input type="number" class="form-control" id="a.lb" min="0" ng-model="a.lb" ng-change="update()"></td>
+            <td ng-hide="vScale=='ML'"><input type="number" class="form-control" id="a.lbd" min="0" ng-model="a.lbd" ng-change="changeDropsLB($index)"></td>
+            <td ng-hide="vScale=='DROPS'"><input type="number" class="form-control" id="a.ub" min="0" ng-model="a.ub" ng-change="update()"></td>
+            <td ng-hide="vScale=='ML'"><input type="number" class="form-control" id="a.ubd" min="0" ng-model="a.ubd" ng-change="changeDropsUB($index)"></td>
+          </tr>
+        <tbody>
+      </table>
+      <form class="form-inline" role="form">
+        <select class="form-control" id="itemName" ng-model="itemName" ng-options="item.name as item.name for item in model.db"><option value="">{{'--- New ---'|translate}}</option></select>
+        <button type="submit" class="btn btn-default" ng-click="addCalc()"><span class="glyphicon glyphicon-plus"></span></button>
+      </form>
+    </div>
+    <div id="database" class="tab-pane fade">
+      <table class="table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>{{'Name'|translate}}</th>
+            <th>{{'Price ($/ml)'|translate}}</th>
+            <th>{{'PG (%)'|translate}}</th>
+            <th>{{'VG (%)'|translate}}</th>
+            <th>{{'AD (%)'|translate}}</th>
+            <th>{{'Nicotine (mg/ml)'|translate}}</th>
+            <th>{{'Max Vol (ml)'|translate}}</th>
+            <th>{{'Comment'|translate}}</th>
+          </tr>
+        <thead>
+        <tbody>
+          <tr ng-repeat="a in model.db">
+            <td><button type="submit" class="btn btn-default" ng-click="deleteDb(a)"><span class="glyphicon glyphicon-minus"></span></button></td>
+            <td><input type="text" class="form-control" id="a.name" ng-model="a.name" ng-change="save()"></td>
+            <td><input type="number" class="form-control" id="a.price" min="0" ng-model="a.price" ng-change="save()"></td>
+            <td><input type="number" class="form-control" id="a.pg" min="0" max="100" ng-model="a.pg" ng-change="save()"></td>
+            <td><input type="number" class="form-control" id="a.vg" min="0" max="100" ng-model="a.vg" ng-change="save()"></td>
+            <td><input type="number" class="form-control" id="a.ad" min="0" max="100" ng-model="a.ad" ng-change="save()"></td>
+            <td><input type="number" class="form-control" id="a.ni" min="0" max="100" ng-model="a.ni" ng-change="save()"></td>
+            <td><input type="number" class="form-control" id="a.ub" min="0" ng-model="a.ub" ng-change="save()"></td>
+            <td><textarea class="form-control" id="a.comment" ng-model="a.comment" ng-change="save()"></textarea></td>
+          </tr>
+        <tbody>
+      </table>
+      <form class="form-inline" role="form">
+        <button type="submit" class="btn btn-default" ng-click="addDb()"><span class="glyphicon glyphicon-plus"></span></button>
+      </form>
+    </div>
+    <div id="mixes" class="tab-pane fade">
+      <table class="table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>{{'Name'|translate}}</th>
+            <th>{{'Comment'|translate}}</th>
+          </tr>
+        <thead>
+        <tbody>
+          <tr>
+            <td><button type="submit" class="btn btn-default" ng-click="addMix()"><span class="glyphicon glyphicon-save"></span></button></td>
+            <td><input type="text" class="form-control" id="a.name" ng-model="model.current.name" ng-change="save()"></td>
+            <td><textarea class="form-control" id="a.comment" ng-model="model.current.comment" ng-change="save()"></textarea></td>
+          </tr>
+        <tbody>
+      </table>
+      <table class="table">
+        <thead>
+          <tr>
+            <th></th>
+            <th></th>
+            <th>{{'Name'|translate}}</th>
+            <th>{{'Volume (ml)'|translate}}</th>
+            <th>{{'Cost ($)'|translate}}</th>
+            <th>{{'PG (%)'|translate}}</th>
+            <th>{{'VG (%)'|translate}}</th>
+            <th>{{'AD (%)'|translate}}</th>
+            <th>{{'Nicotine (mg/ml)'|translate}}</th>
+            <th>{{'Comment'|translate}}</th>
+          </tr>
+        <thead>
+        <tbody>
+          <tr ng-repeat="a in model.mixes">
+            <td><button type="submit" class="btn btn-default" ng-click="deleteMix(a)"><span class="glyphicon glyphicon-minus"></span></button></td>
+            <td><button type="submit" class="btn btn-default" ng-click="openMix(a)"><span class="glyphicon glyphicon-open"></span></button></td>
+            <td><input type="text" class="form-control" id="a.name" ng-model="a.name" ng-change="save()"></td>
+            <td><input type="number" class="form-control" id="a.t_vol" min="0" ng-model="a.t_vol" ng-readonly="true"></td>
+            <td><input type="number" class="form-control" id="a.t_cost" min="0" ng-model="a.t_cost" ng-readonly="true"></td>
+            <td><input type="number" class="form-control" id="a.t_pg" min="0" max="100" ng-model="a.t_pg" ng-readonly="true"></td>
+            <td><input type="number" class="form-control" id="a.t_vg" min="0" max="100" ng-model="a.t_vg" ng-readonly="true"></td>
+            <td><input type="number" class="form-control" id="a.t_ad" min="0" max="100" ng-model="a.t_ad" ng-readonly="true"></td>
+            <td><input type="number" class="form-control" id="a.t_ni" min="0" max="100" ng-model="a.t_ni" ng-readonly="true"></td>
+            <td><textarea class="form-control" id="a.comment" ng-model="a.comment" ng-change="save()"></textarea></td>
+          </tr>
+        <tbody>
+      </table>
+    </div>
+    <div id="options" class="tab-pane fade">
+      <div class="panel panel-default">
+        <div class="panel-heading">{{'Common'|translate}}</div>
+        <div class="panel-body">
+          <form class="form-horizontal" role="form">
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="dropsPml">{{'Drops per ml'|translate}}</label>
+              <div class="col-sm-6">
+                <input type="number" class="form-control" id="dropsPml" min="0" ng-model="model.dropsPml" ng-change="update()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="model.prefLocale">{{'Preffered language'|translate}}</label>
+              <div class="col-sm-6">
+                <select class="form-control" id="model.prefLocale" ng-model="model.prefLocale"  ng-change="changeLocale()">
+                    <option value="ru">Ru</option>
+                    <option value="en">En</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">{{'Local Storage'|translate}}</div>
+        <div class="panel-body">
+          <form class="form-horizontal" role="form">
+            <div class="form-group">
+              <label class="control-label col-sm-2"></label>
+              <div class="btn-group col-sm-6">
+                <button type="submit" class="btn btn-default" ng-click="clear()">{{'Clear'|translate}}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">{{'Dropbox'|translate}}</div>
+        <div class="panel-body">
+          <form class="form-horizontal" role="form">
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="dbuser">{{'User'|translate}}</label>
+              <div class="col-sm-6">
+                <input type="text" class="form-control" id="dbuser" placeholder="{{'Not logged in'|translate}}" ng-readonly="true" ng-model="userInfo.name">
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-6">
+                  <div class="checkbox">
+                      <label>
+                        <input type="checkbox" id="model.readOnLogin" ng-model="model.readOnLogin" ng-change="save()"/>
+                        {{'Restore on login'|translate}}
+                      </label>
+                  </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-sm-2"></label>
+              <div class="btn-group col-sm-6">
+                <button type="submit" class="btn btn-default" ng-click="db_login()" ng-show="userInfo==null">{{'Login'|translate}}</button>
+                <button type="submit" class="btn btn-default" ng-click="db_logout()" ng-show="userInfo!=null">{{'Logout'|translate}}</button>
+                <button type="submit" class="btn btn-default" ng-click="db_write()" ng-show="userInfo!=null" ng-disabled="dbdirty==false">{{'Save'|translate}}</button>
+                <button type="submit" class="btn btn-default" ng-click="db_read()" ng-show="userInfo!=null" ng-disabled="dbdirty==false">{{'Restore'|translate}}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+</body>
+</html>
